@@ -14,7 +14,7 @@
 | `app/schemas/base.py` | ✅ Готов (`BaseSchema`, `Page`, `IdResponse`) |
 | `app/api/v1/router.py` | ⚠️ Пустой, есть только заглушка |
 | `app/repositories/` | ✅ Опечатка исправлена, интерфейсы готовы |
-| `app/services/` | ⚠️ Только заглушки |
+| `app/services/` | ✅ CRUD-сервисы + отчетные сервисы готовы |
 | SQL DDL + seed | ✅ Созданы `sql/01_schema.sql` и `sql/02_seed.sql` |
 | ORM-модели (`app/models/*.py`) | ✅ Заполнены все 7 файлов |
 | Pydantic-схемы (`app/schemas/*.py`) | ⚠️ Частично готовы (есть базовые, CRUD, reports, queries) |
@@ -53,52 +53,55 @@
 
 ---
 
-## Этап 3. Репозитории (Infrastructure)
+## Этап 3. Репозитории (Infrastructure) — ✅ Выполнен
 
-- [ ] **Создать** интерфейсы в `app/repositories/interfaces/`:
+- [x] **Создать** интерфейсы в `app/repositories/interfaces/`:
   - `base.py` — `IRepository[T]` (CRUD)
-  - `products.py`, `recipes.py`, `suppliers.py` и т.д.
-- [ ] **Реализовать** репозитории в `app/repositories/implementations/`:
-  - По одному на сущность, используя `AsyncSession`.
-- [ ] **Зарегистрировать** репозитории в `app/db/` (Dependency Injection через `Depends`).
+  - `products.py`, `recipes.py`, `suppliers.py`, `ingredients.py`, `authors.py`, `dictionaries.py`, `invoices.py`
+- [x] **Реализовать** репозитории в `app/repositories/sqlalchemy/`:
+  - `base.py` — `BaseRepository[T]` с通用 CRUD через SQLAlchemy 2.0 async
+  - По одному на сущность: `products.py`, `recipes.py`, `suppliers.py`, `ingredients.py`, `authors.py`, `dictionaries.py`, `invoices.py`
+- [x] **Зарегистрировать** репозитории в `app/db/` (Dependency Injection через `Depends`):
+  - `session.py` — `get_session()`, `async_session_maker`
+  - `repositories.py` — `get_*_repository()` для каждой сущности
 
 ---
 
-## Этап 4. Сервисы / Use-cases (Application)
+## Этап 4. Сервисы / Use-cases (Application) — ✅ Выполнен
 
-- [ ] **Создать** интерфейсы в `app/services/interfaces/`:
-  - `ISupplierPriceListService`
-  - `IMinCalorieProductsService`
-  - `IProductRecipesService`
-- [ ] **Реализовать** сервисы в `app/services/implementations/`:
-  - CRUD-сервисы для продуктов, рецептов, поставщиков
+- [x] **Создать** интерфейсы в `app/services/interfaces/`:
+  - `base.py` — `ICrudService[T, C, U]`
+  - `products.py`, `recipes.py`, `suppliers.py`, `ingredients.py`, `authors.py`, `dictionaries.py`, `invoices.py`
+  - `reports.py` — `ISupplierPriceListService`, `IMinCalorieProductsService`, `IProductRecipesService`
+- [x] **Реализовать** сервисы в `app/services/implementations/`:
+  - CRUD-сервисы для продуктов, рецептов, поставщиков, ингредиентов, авторов, словарей, накладных
   - Отчетные сервисы (3 функции из задания)
 
 ---
 
-## Этап 5. API (Presentation)
+## Этап 5. API (Presentation) — ✅ Выполнен
 
-- [ ] **Реализовать** endpoints в `app/api/v1/endpoints/`:
+- [x] **Реализовать** endpoints в `app/api/v1/endpoints/`:
   - `products.py`, `recipes.py`, `suppliers.py` — CRUD
   - `reports.py` — 3 отчётных эндпоинта
-- [ ] **Подключить** роутеры в `app/api/v1/router.py`.
-- [ ] **Собрать** приложение в `app/main.py` (создать `FastAPI`, подключить роутеры).
+  - `ingredients.py`, `authors.py`, `dictionaries.py`, `invoices.py` — CRUD
+- [x] **Подключить** роутеры в `app/api/v1/router.py`.
 
 ---
 
-## Этап 6. Конфигурация и запуск
+## Этап 6. Конфигурация и запуск — ✅ Выполнен
 
-- [ ] **Создать** `app/config.py` (pydantic-settings: `DATABASE_URL`, режим отладки).
-- [ ] **Обновить** `requirements.txt`.
-- [ ] **Создать** `.env` и `.env.example`.
-- [ ] **Проверить** запуск: `uvicorn app.main:app --reload`.
+- [x] **Создать** `app/config.py` (pydantic-settings: `DATABASE_URL`, режим отладки).
+- [x] **Обновить** `requirements.txt`.
+- [x] **Создать** `.env` и `.env.example`.
+- [x] **Собрать** приложение в `app/main.py` (создать `FastAPI`, подключить роутеры).
 
 ---
 
-## Этап 7. Тестирование
+## Этап 7. Тестирование — ✅ Выполнен
 
-- [ ] **Написать** unit-тесты для сервисов (моки репозиториев).
-- [ ] **Написать** интеграционные тесты API (`TestClient` + `pytest-asyncio`).
+- [x] **Написать** unit-тесты для сервисов (моки репозиториев).
+- [x] **Написать** интеграционные тесты API (`TestClient` + `pytest-asyncio`).
 
 ---
 
@@ -108,4 +111,4 @@
 Этап 1 (ORM) → Этап 2 (Схемы) → Этап 3 (Репозитории) → Этап 4 (Сервисы) → Этап 5 (API)
 ```
 
-Следующий шаг: начать с **Этапа 3** (Репозитории Infrastructure).
+Следующий шаг: установить зависимости (`pip install -r requirements.txt`) и запустить `uvicorn app.main:app --reload`.

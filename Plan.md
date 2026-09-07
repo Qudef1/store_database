@@ -13,22 +13,22 @@
 | `app/models/base.py` | ✅ Готов (`Base` с naming convention) |
 | `app/schemas/base.py` | ✅ Готов (`BaseSchema`, `Page`, `IdResponse`) |
 | `app/api/v1/router.py` | ⚠️ Пустой, есть только заглушка |
-| `app/repositiries/` | ⚠️ Опечатка в названии (`repositiries`), файлы пустые |
+| `app/repositories/` | ✅ Опечатка исправлена, интерфейсы готовы |
 | `app/services/` | ⚠️ Только заглушки |
-| SQL DDL + seed | ❌ Отсутствуют |
-| ORM-модели (`app/models/*.py`) | ❌ Пустые |
-| Pydantic-схемы (`app/schemas/*.py`) | ❌ Пустые |
-| Alembic | ⚠️ `env.py` есть, но конфиг/миграции не настроены |
+| SQL DDL + seed | ✅ Созданы `sql/01_schema.sql` и `sql/02_seed.sql` |
+| ORM-модели (`app/models/*.py`) | ✅ Заполнены все 7 файлов |
+| Pydantic-схемы (`app/schemas/*.py`) | ⚠️ Частично готовы (есть базовые, CRUD, reports, queries) |
+| Alembic | ✅ `alembic.ini`, `env.py`, `script.py.mako` настроены |
 | Тесты | ❌ Отсутствуют |
 
 ---
 
-## Этап 1. Фундамент (БД + ORM)
+## Этап 1. Фундамент (БД + ORM) — ✅ Выполнен
 
-- [ ] **Переименовать** `app/repositiries` → `app/repositories` (исправить опечатку).
-- [ ] **Создать** `sql/01_schema.sql` — DDL PostgreSQL (9 таблиц, FK, CHECK, индексы).
-- [ ] **Создать** `sql/02_seed.sql` — тестовые данные.
-- [ ] **Реализовать** ORM-модели в `app/models/*.py`:
+- [x] **Переименовать** `app/repositiries` → `app/repositories` (исправить опечатку).
+- [x] **Создать** `sql/01_schema.sql` — DDL PostgreSQL (9 таблиц, FK, CHECK, индексы).
+- [x] **Создать** `sql/02_seed.sql` — тестовые данные.
+- [x] **Реализовать** ORM-модели в `app/models/*.py`:
   - `authors.py`
   - `dictionaries.py` (product_group, preparation_method)
   - `ingredients.py`
@@ -36,20 +36,20 @@
   - `products.py`
   - `recipes.py`
   - `suppliers.py`
-- [ ] **Настроить** Alembic: `alembic.ini`, обновить `env.py`, создать первую миграцию.
+- [x] **Настроить** Alembic: `alembic.ini`, обновить `env.py`, создать первую миграцию.
 
 ---
 
 ## Этап 2. Pydantic-схемы (контракты API)
 
-- [ ] **Заполнить** `app/schemas/dictionaries.py` — `ProductGroup`, `PreparationMethod` (Base/Create/Update/Read).
-- [ ] **Заполнить** `app/schemas/ingredients.py` — `Ingredient` + `IngredientPrice`.
-- [ ] **Заполнить** `app/schemas/suppliers.py` — `Supplier`.
-- [ ] **Заполнить** `app/schemas/authors.py` — `Author`.
-- [ ] **Заполнить** `app/schemas/products.py` — `Product`.
-- [ ] **Заполнить** `app/schemas/recipes.py` — `Recipe`, `RecipeIngredient`.
-- [ ] **Заполнить** `app/schemas/reports.py` — 3 отчёта (прайс-лист, мин. калорийность, блюда+рецепты).
-- [ ] **Заполнить** `app/schemas/queries.py` — фильтры/пагинация.
+- [x] **Заполнить** `app/schemas/dictionaries.py` — `ProductGroup`, `PreparationMethod` (Base/Create/Update/Read).
+- [x] **Заполнить** `app/schemas/ingredients.py` — `Ingredient` + `IngredientPrice`.
+- [x] **Заполнить** `app/schemas/suppliers.py` — `Supplier`.
+- [x] **Заполнить** `app/schemas/authors.py` — `Author`.
+- [x] **Заполнить** `app/schemas/products.py` — `Product`.
+- [x] **Заполнить** `app/schemas/recipes.py` — `Recipe`, `RecipeIngredient`.
+- [x] **Заполнить** `app/schemas/reports.py` — 3 отчёта (прайс-лист, мин. калорийность, блюда+рецепты).
+- [x] **Заполнить** `app/schemas/queries.py` — фильтры/пагинация.
 
 ---
 
@@ -108,4 +108,4 @@
 Этап 1 (ORM) → Этап 2 (Схемы) → Этап 3 (Репозитории) → Этап 4 (Сервисы) → Этап 5 (API)
 ```
 
-Следующий шаг: начать с **Этапа 1** (SQL DDL + ORM-модели).
+Следующий шаг: начать с **Этапа 3** (Репозитории Infrastructure).

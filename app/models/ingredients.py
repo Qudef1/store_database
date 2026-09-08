@@ -26,8 +26,10 @@ class Ingredient(Base):
 
     recipe_ingredients: Mapped[list["RecipeIngredient"]] = relationship(
         back_populates="ingredient",
+        passive_deletes=True,
     )
 
     invoice_items: Mapped[list["InvoiceItem"]] = relationship(
         back_populates="ingredient",
+        passive_deletes=True,
     )

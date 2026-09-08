@@ -18,5 +18,6 @@ class Author(Base):
 
     recipes: Mapped[list["Recipe"]] = relationship(
         back_populates="author",
+        passive_deletes=True,
     )
     

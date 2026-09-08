@@ -15,6 +15,7 @@ class ProductGroup(Base):
 
     products: Mapped[list["Product"]] = relationship(
         back_populates="group",
+        passive_deletes=True,
     )
 
 
@@ -27,5 +28,6 @@ class PreparationMethod(Base):
 
     recipe_ingredients: Mapped[list["RecipeIngredient"]] = relationship(
         back_populates="preparation_method",
+        passive_deletes=True,
     )
     

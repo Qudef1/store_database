@@ -54,7 +54,7 @@ class InvoiceBase(BaseSchema):
 
 
 class InvoiceCreate(InvoiceBase):
-    items: list[InvoiceItemCreate] = Field(min_length=1)
+    items: list[InvoiceItemCreate] = Field(default_factory=list)
 
 
 class InvoiceUpdate(BaseSchema):

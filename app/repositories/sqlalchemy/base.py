@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Base
@@ -26,7 +28,8 @@ class BaseRepository(IRepository[T], Generic[T]):
 
     async def create(self, obj: T) -> T:
         self._session.add(obj)
-        await self._session.flush()
+        await self._flush_or_raise_conflict()
+        await self._commit_or_raise_conflict()
         await self._session.refresh(obj)
         return obj
 
@@ -37,7 +40,8 @@ class BaseRepository(IRepository[T], Generic[T]):
         for key, value in vars(obj).items():
             if key != "_sa_instance_state":
                 setattr(existing, key, value)
-        await self._session.flush()
+        await self._flush_or_raise_conflict()
+        await self._commit_or_raise_conflict()
         await self._session.refresh(existing)
         return existing
 
@@ -46,5 +50,31 @@ class BaseRepository(IRepository[T], Generic[T]):
         if existing is None:
             return False
         await self._session.delete(existing)
-        await self._session.flush()
+        await self._flush_or_raise_conflict()
+        await self._commit_or_raise_conflict()
         return True
+
+    async def _flush_or_raise_conflict(self) -> None:
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Operation violates database constraints. "
+                    "Check linked records and unique fields."
+                ),
+            ) from exc
+
+    async def _commit_or_raise_conflict(self) -> None:
+        try:
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Operation violates database constraints. "
+                    "Check linked records and unique fields."
+                ),
+            ) from exc

@@ -51,6 +51,7 @@ class Invoice(Base):
         back_populates="invoice",
         cascade="all, delete-orphan",
         passive_deletes=True,
+        lazy="selectin",
     )
 
 

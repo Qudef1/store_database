@@ -54,7 +54,7 @@ class RecipeBase(BaseSchema):
 
 
 class RecipeCreate(RecipeBase):
-    ingredients: list[RecipeIngredientCreate] = Field(min_length=1)
+    ingredients: list[RecipeIngredientCreate] = Field(default_factory=list)
 
 
 class RecipeUpdate(BaseSchema):

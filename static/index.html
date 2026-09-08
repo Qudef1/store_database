@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Банк данных технологий создания продуктов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .table-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #3498db;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d68910;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .actions .btn {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #2c3e50;
+        }
+
+        .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .api-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Банк данных технологий создания продуктов</h1>
+        <p>Управление таблицами базы данных</p>
+    </div>
+
+    <div class="container">
+        <!-- Products Table -->
+        <div class="table-section" id="products-section">
+            <div class="table-header">
+                <h2>Товары (Products)</h2>
+                <button class="btn btn-primary" onclick="openModal('products')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="products-loading" class="loading">Загрузка...</div>
+                <div id="products-content"></div>
+            </div>
+        </div>
+
+        <!-- Recipes Table -->
+        <div class="table-section" id="recipes-section">
+            <div class="table-header">
+                <h2>Рецепты (Recipes)</h2>
+                <button class="btn btn-primary" onclick="openModal('recipes')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="recipes-loading" class="loading">Загрузка...</div>
+                <div id="recipes-content"></div>
+            </div>
+        </div>
+
+        <!-- Suppliers Table -->
+        <div class="table-section" id="suppliers-section">
+            <div class="table-header">
+                <h2>Поставщики (Suppliers)</h2>
+                <button class="btn btn-primary" onclick="openModal('suppliers')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="suppliers-loading" class="loading">Загрузка...</div>
+                <div id="suppliers-content"></div>
+            </div>
+        </div>
+
+        <!-- Authors Table -->
+        <div class="table-section" id="authors-section">
+            <div class="table-header">
+                <h2>Авторы (Authors)</h2>
+                <button class="btn btn-primary" onclick="openModal('authors')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="authors-loading" class="loading">Загрузка...</div>
+                <div id="authors-content"></div>
+            </div>
+        </div>
+
+        <!-- Ingredients Table -->
+        <div class="table-section" id="ingredients-section">
+            <div class="table-header">
+                <h2>Ингредиенты (Ingredients)</h2>
+                <button class="btn btn-primary" onclick="openModal('ingredients')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="ingredients-loading" class="loading">Загрузка...</div>
+                <div id="ingredients-content"></div>
+            </div>
+        </div>
+
+        <!-- Product Groups Table -->
+        <div class="table-section" id="product-groups-section">
+            <div class="table-header">
+                <h2>Группы товаров (Product Groups)</h2>
+                <button class="btn btn-primary" onclick="openModal('product-groups')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="product-groups-loading" class="loading">Загрузка...</div>
+                <div id="product-groups-content"></div>
+            </div>
+        </div>
+
+        <!-- Preparation Methods Table -->
+        <div class="table-section" id="preparation-methods-section">
+            <div class="table-header">
+                <h2>Способы приготовления (Preparation Methods)</h2>
+                <button class="btn btn-primary" onclick="openModal('preparation-methods')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="preparation-methods-loading" class="loading">Загрузка...</div>
+                <div id="preparation-methods-content"></div>
+            </div>
+        </div>
+
+        <!-- Invoices Table -->
+        <div class="table-section" id="invoices-section">
+            <div class="table-header">
+                <h2>Накладные (Invoices)</h2>
+                <button class="btn btn-primary" onclick="openModal('invoices')">+ Добавить</button>
+            </div>
+            <div class="table-container">
+                <div id="invoices-loading" class="loading">Загрузка...</div>
+                <div id="invoices-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Добавить</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+        let currentTable = null;
+        let currentEditId = null;
+
+        // Table configurations
+        const tableConfigs = {
+            products: {
+                apiPath: '/products',
+                fields: [
+                    { name: 'name', label: 'Название', type: 'text', required: true },
+                    { name: 'group_id', label: 'ID группы', type: 'number', required: true }
+                ],
+                columns: ['id', 'name', 'group_id']
+            },
+            recipes: {
+                apiPath: '/recipes',
+                fields: [
+                    { name: 'number', label: 'Номер', type: 'text', required: true },
+                    { name: 'name', label: 'Название', type: 'text', required: true },
+                    { name: 'description', label: 'Описание', type: 'textarea', required: false },
+                    { name: 'product_id', label: 'ID товара', type: 'number', required: true },
+                    { name: 'author_id', label: 'ID автора', type: 'number', required: true }
+                ],
+                columns: ['id', 'number', 'name', 'description', 'product_id', 'author_id']
+            },
+            suppliers: {
+                apiPath: '/suppliers',
+                fields: [
+                    { name: 'code', label: 'Код', type: 'text', required: true },
+                    { name: 'name', label: 'Название', type: 'text', required: true },
+                    { name: 'address', label: 'Адрес', type: 'text', required: false },
+                    { name: 'phone', label: 'Телефон', type: 'text', required: false }
+                ],
+                columns: ['id', 'code', 'name', 'address', 'phone']
+            },
+            authors: {
+                apiPath: '/authors',
+                fields: [
+                    { name: 'code', label: 'Код', type: 'text', required: true },
+                    { name: 'surname', label: 'Фамилия', type: 'text', required: true },
+                    { name: 'name', label: 'Имя', type: 'text', required: true },
+                    { name: 'country', label: 'Страна', type: 'text', required: true },
+                    { name: 'year', label: 'Год', type: 'number', required: true }
+                ],
+                columns: ['id', 'code', 'surname', 'name', 'country', 'year']
+            },
+            ingredients: {
+                apiPath: '/ingredients',
+                fields: [
+                    { name: 'name', label: 'Название', type: 'text', required: true },
+                    { name: 'calories_per_gram', label: 'Калории на грамм', type: 'number', required: true, step: '0.0001' }
+                ],
+                columns: ['id', 'name', 'calories_per_gram']
+            },
+            'product-groups': {
+                apiPath: '/product-groups',
+                fields: [
+                    { name: 'code', label: 'Код', type: 'text', required: true },
+                    { name: 'name', label: 'Название', type: 'text', required: true }
+                ],
+                columns: ['id', 'code', 'name']
+            },
+            'preparation-methods': {
+                apiPath: '/preparation-methods',
+                fields: [
+                    { name: 'code', label: 'Код', type: 'text', required: true },
+                    { name: 'name', label: 'Название', type: 'text', required: true }
+                ],
+                columns: ['id', 'code', 'name']
+            },
+            invoices: {
+                apiPath: '/invoices',
+                fields: [
+                    { name: 'number', label: 'Номер', type: 'text', required: false },
+                    { name: 'supplier_id', label: 'ID поставщика', type: 'number', required: true },
+                    { name: 'invoice_date', label: 'Дата', type: 'date', required: true }
+                ],
+                columns: ['id', 'number', 'supplier_id', 'invoice_date']
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllTables();
+        });
+
+        async function loadAllTables() {
+            for (const tableName of Object.keys(tableConfigs)) {
+                await loadTable(tableName);
+            }
+        }
+
+        async function loadTable(tableName) {
+            const config = tableConfigs[tableName];
+            const loading = document.getElementById(`${tableName}-loading`);
+            const content = document.getElementById(`${tableName}-content`);
+
+            try {
+                const response = await fetch(`${API_BASE}${config.apiPath}/`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data = await response.json();
+                renderTable(tableName, data, config);
+                if (loading) loading.style.display = 'none';
+            } catch (error) {
+                if (loading) loading.innerHTML = `<div class="alert alert-error">Ошибка загрузки: ${error.message}</div>`;
+            }
+        }
+
+        function renderTable(tableName, data, config) {
+            const content = document.getElementById(`${tableName}-content`);
+            if (!data || data.length === 0) {
+                content.innerHTML = '<div class="empty-state">Нет данных</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr>';
+            config.columns.forEach(col => {
+                html += `<th>${getColumnLabel(col, tableName)}</th>`;
+            });
+            html += '<th>Действия</th></tr></thead><tbody>';
+
+            data.forEach(item => {
+                html += '<tr>';
+                config.columns.forEach(col => {
+                    html += `<td>${item[col] !== null ? item[col] : '-'}</td>`;
+                });
+                html += `<td class="actions">
+                    <button class="btn btn-warning" onclick="editItem('${tableName}', ${item.id})">Редактировать</button>
+                    <button class="btn btn-danger" onclick="deleteItem('${tableName}', ${item.id})">Удалить</button>
+                </td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        function getColumnLabel(col, tableName) {
+            const labels = {
+                id: 'ID',
+                name: 'Название',
+                code: 'Код',
+                surname: 'Фамилия',
+                country: 'Страна',
+                year: 'Год',
+                address: 'Адрес',
+                phone: 'Телефон',
+                calories_per_gram: 'Калории/г',
+                group_id: 'Группа',
+                number: 'Номер',
+                description: 'Описание',
+                product_id: 'Товар',
+                author_id: 'Автор',
+                supplier_id: 'Поставщик',
+                invoice_date: 'Дата накладной'
+            };
+            return labels[col] || col;
+        }
+
+        function openModal(tableName, editId = null) {
+            currentTable = tableName;
+            currentEditId = editId;
+            const config = tableConfigs[tableName];
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+
+            title.textContent = editId ? 'Редактировать' : 'Добавить';
+
+            let html = '<form id="modal-form">';
+            config.fields.forEach(field => {
+                html += `<div class="form-group">
+                    <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>`;
+                
+                if (field.type === 'textarea') {
+                    html += `<textarea id="${field.name}" name="${field.name}" ${field.required ? 'required' : ''}></textarea>`;
+                } else {
+                    html += `<input type="${field.type}" id="${field.name}" name="${field.name}" 
+                        ${field.required ? 'required' : ''} ${field.step ? `step="${field.step}"` : ''}>`;
+                }
+                
+                html += '</div>';
+            });
+
+            html += `<div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div></form>`;
+
+            body.innerHTML = html;
+            modal.classList.add('active');
+
+            // If editing, load existing data
+            if (editId) {
+                loadItemForEdit(tableName, editId);
+            }
+
+            // Form submit handler
+            document.getElementById('modal-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveItem();
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            currentTable = null;
+            currentEditId = null;
+        }
+
+        async function loadItemForEdit(tableName, id) {
+            const config = tableConfigs[tableName];
+            try {
+                const response = await fetch(`${API_BASE}${config.apiPath}/${id}`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data = await response.json();
+                
+                config.fields.forEach(field => {
+                    const input = document.getElementById(field.name);
+                    if (input && data[field.name] !== undefined) {
+                        input.value = data[field.name];
+                    }
+                });
+            } catch (error) {
+                alert('Ошибка загрузки данных: ' + error.message);
+            }
+        }
+
+        async function saveItem() {
+            const config = tableConfigs[currentTable];
+            const formData = {};
+            
+            config.fields.forEach(field => {
+                const input = document.getElementById(field.name);
+                let value = input.value;
+
+                if (!field.required && value === '') {
+                    formData[field.name] = null;
+                    return;
+                }
+                
+                if (field.type === 'number') {
+                    value = parseFloat(value);
+                }
+                
+                formData[field.name] = value;
+            });
+
+            const url = currentEditId 
+                ? `${API_BASE}${config.apiPath}/${currentEditId}`
+                : `${API_BASE}${config.apiPath}/`;
+            
+            const method = currentEditId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Ошибка сохранения'));
+                }
+
+                const tableToReload = currentTable;
+                closeModal();
+                loadTable(tableToReload);
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        async function deleteItem(tableName, id) {
+            if (!confirm('Вы уверены, что хотите удалить этот элемент?')) {
+                return;
+            }
+
+            const config = tableConfigs[tableName];
+            
+            try {
+                const response = await fetch(`${API_BASE}${config.apiPath}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Ошибка удаления'));
+                }
+                
+                loadTable(tableName);
+            } catch (error) {
+                alert('Ошибка удаления: ' + error.message);
+            }
+        }
+
+        async function getErrorMessage(response, fallback) {
+            try {
+                const error = await response.json();
+                if (Array.isArray(error.detail)) {
+                    return error.detail.map(item => item.msg || JSON.stringify(item)).join('\n');
+                }
+                return error.detail || fallback;
+            } catch {
+                return fallback;
+            }
+        }
+
+        function editItem(tableName, id) {
+            openModal(tableName, id);
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

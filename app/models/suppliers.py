@@ -17,4 +17,5 @@ class Supplier(Base):
 
     invoices: Mapped[list["Invoice"]] = relationship(
         back_populates="supplier",
+        passive_deletes=True,
     )

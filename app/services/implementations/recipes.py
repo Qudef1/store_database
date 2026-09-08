@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Recipe
 from app.repositories.interfaces.recipes import IRepository as IRecipeRepository
 from app.repositories.sqlalchemy.recipes import RecipeRepository
-from app.schemas.recipes import RecipeCreate, RecipeRead, RecipeUpdate
+from app.schemas.recipes import RecipeCreate, RecipeListRead, RecipeRead, RecipeUpdate
 
 
 class RecipeService:
@@ -18,9 +18,9 @@ class RecipeService:
             return None
         return RecipeRead.model_validate(obj)
 
-    async def list(self, *, offset: int = 0, limit: int = 100) -> list[RecipeRead]:
+    async def list(self, *, offset: int = 0, limit: int = 100) -> list[RecipeListRead]:
         objs = await self._repo.list(offset=offset, limit=limit)
-        return [RecipeRead.model_validate(o) for o in objs]
+        return [RecipeListRead.model_validate(o) for o in objs]
 
     async def create(self, schema: RecipeCreate) -> RecipeRead:
         obj = Recipe(

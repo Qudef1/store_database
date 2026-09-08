@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: lab2-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-food_products}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./sql/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-food_products}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lab2-network
+
+volumes:
+  postgres_data:
+
+networks:
+  lab2-network:

@@ -28,14 +28,17 @@ class Recipe(Base):
 
     product: Mapped["Product"] = relationship(
         back_populates="recipes",
+        lazy="selectin",
     )
     author: Mapped["Author"] = relationship(
         back_populates="recipes",
+        lazy="selectin",
     )
     ingredients: Mapped[list["RecipeIngredient"]] = relationship(
         back_populates="recipe",
         cascade="all, delete-orphan",
         passive_deletes=True,
+        lazy="selectin",
     )
 
 
@@ -76,7 +79,9 @@ class RecipeIngredient(Base):
     )
     ingredient: Mapped["Ingredient"] = relationship(
         back_populates="recipe_ingredients",
+        lazy="selectin",
     )
     preparation_method: Mapped["PreparationMethod"] = relationship(
         back_populates="recipe_ingredients",
+        lazy="selectin",
     )

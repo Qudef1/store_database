@@ -73,3 +73,8 @@ class RecipeRead(RecipeBase):
     id: int
     author: AuthorRead | None = None
     ingredients: list[RecipeIngredientRead] = Field(default_factory=list)
+
+
+class RecipeListRead(RecipeBase):
+    id: int
+    author: AuthorRead | None = None

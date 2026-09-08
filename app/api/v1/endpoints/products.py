@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.db.repositories import get_product_repository
+from app.db.repositories import get_product_service
 from app.schemas.products import ProductCreate, ProductRead, ProductUpdate
-from app.services.implementations.products import ProductService
 
 router = APIRouter()
 
@@ -10,7 +9,7 @@ router = APIRouter()
 @router.post("/", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
 async def create_product(
     schema: ProductCreate,
-    service: ProductService = Depends(get_product_repository),
+    service = Depends(get_product_service),
 ) -> ProductRead:
     return await service.create(schema)
 
@@ -18,7 +17,7 @@ async def create_product(
 @router.get("/{product_id}", response_model=ProductRead)
 async def get_product(
     product_id: int,
-    service: ProductService = Depends(get_product_repository),
+    service = Depends(get_product_service),
 ) -> ProductRead:
     obj = await service.get(product_id)
     if obj is None:
@@ -30,7 +29,7 @@ async def get_product(
 async def list_products(
     offset: int = 0,
     limit: int = 100,
-    service: ProductService = Depends(get_product_repository),
+    service = Depends(get_product_service),
 ) -> list[ProductRead]:
     return await service.list(offset=offset, limit=limit)
 
@@ -39,7 +38,7 @@ async def list_products(
 async def update_product(
     product_id: int,
     schema: ProductUpdate,
-    service: ProductService = Depends(get_product_repository),
+    service = Depends(get_product_service),
 ) -> ProductRead:
     obj = await service.update(product_id, schema)
     if obj is None:
@@ -50,7 +49,7 @@ async def update_product(
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(
     product_id: int,
-    service: ProductService = Depends(get_product_repository),
+    service = Depends(get_product_service),
 ) -> None:
     ok = await service.delete(product_id)
     if not ok:

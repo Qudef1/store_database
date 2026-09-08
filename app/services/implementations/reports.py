@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from datetime import date
+from decimal import Decimal
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Ingredient, Invoice, InvoiceItem, Supplier
+from app.models import Ingredient, Invoice, InvoiceItem, Recipe, RecipeIngredient, Supplier  # noqa: F401
 from app.schemas.reports import (
+    DishCalorieRead,
     DishWithRecipes,
     MinCalorieDishesResponse,
     PriceListResponse,
@@ -51,8 +55,12 @@ class MinCalorieProductsService:
         self._session = session
 
     async def get_min_calorie_dishes(self) -> MinCalorieDishesResponse:
+        from app.models import Product, ProductGroup
+
         stmt = (
-            select(Recipe, Ingredient, RecipeIngredient)
+            select(Recipe, Product, ProductGroup, Ingredient, RecipeIngredient)
+            .join(Product, Recipe.product_id == Product.id)
+            .join(ProductGroup, Product.group_id == ProductGroup.id)
             .join(RecipeIngredient, Recipe.id == RecipeIngredient.recipe_id)
             .join(Ingredient, RecipeIngredient.ingredient_id == Ingredient.id)
         )
@@ -62,14 +70,12 @@ class MinCalorieProductsService:
         from collections import defaultdict
 
         recipe_calories: dict[int, Decimal] = defaultdict(Decimal)
-        recipe_ingredients: dict[int, list[tuple[str, Decimal]]] = defaultdict(list)
-        recipe_names: dict[int, str] = {}
+        recipe_product_map: dict[int, tuple[int, str, str, int, str]] = {}
 
-        for recipe, ingredient, recipe_ingredient in rows:
+        for recipe, product, group, ingredient, recipe_ingredient in rows:
             calories = ingredient.calories_per_gram * recipe_ingredient.grams_per_kg
             recipe_calories[recipe.id] += calories
-            recipe_ingredients[recipe.id].append((ingredient.name, calories))
-            recipe_names[recipe.id] = recipe.name
+            recipe_product_map[recipe.id] = (product.id, product.name, group.name, recipe.id, recipe.name)
 
         if not recipe_calories:
             return MinCalorieDishesResponse(min_calories_per_100g=Decimal("0"), items=[])
@@ -78,16 +84,16 @@ class MinCalorieProductsService:
         items = []
         for recipe_id, cal in recipe_calories.items():
             if cal == min_cal:
+                product_id, product_name, group_name, rec_id, rec_name = recipe_product_map[recipe_id]
                 items.append(
-                    MinCalorieDishesResponse(
-                        min_calories_per_100g=min_cal / 10,
-                        items=[
-                            {
-                                "recipe_id": recipe_id,
-                                "recipe_name": recipe_names[recipe_id],
-                                "calories_per_100g": cal / 10,
-                            }
-                        ],
+                    DishCalorieRead(
+                        product_id=product_id,
+                        product_name=product_name,
+                        group_name=group_name,
+                        recipe_id=rec_id,
+                        recipe_name=rec_name,
+                        calories_per_100g=cal / 10,
+                        calories_per_1kg=cal,
                     )
                 )
         return MinCalorieDishesResponse(min_calories_per_100g=min_cal / 10, items=items)
@@ -98,23 +104,32 @@ class ProductRecipesService:
         self._session = session
 
     async def get_products_with_recipes(self) -> list[DishWithRecipes]:
-        from app.models import Recipe, RecipeIngredient
-        from app.schemas.recipes import RecipeTitle
+        from app.models import Product, ProductGroup, Recipe
+        from app.schemas.reports import DishRecipeRead
 
-        stmt = select(Recipe).order_by(Recipe.product_id)
+        stmt = (
+            select(Recipe, Product, ProductGroup)
+            .join(Product, Recipe.product_id == Product.id)
+            .join(ProductGroup, Product.group_id == ProductGroup.id)
+            .order_by(Recipe.product_id)
+        )
         result = await self._session.execute(stmt)
-        recipes = result.scalars().all()
+        rows = result.all()
 
         products_map: dict[int, DishWithRecipes] = {}
-        for recipe in recipes:
+        for recipe, product, group in rows:
             if recipe.product_id not in products_map:
                 products_map[recipe.product_id] = DishWithRecipes(
-                    product_id=recipe.product_id,
-                    product_name="",
-                    group_name=None,
+                    product_id=product.id,
+                    product_name=product.name,
+                    group_name=group.name,
                     recipes=[],
                 )
             products_map[recipe.product_id].recipes.append(
-                RecipeTitle(id=recipe.id, number=recipe.number, name=recipe.name)
+                DishRecipeRead(
+                    recipe_id=recipe.id,
+                    recipe_number=recipe.number,
+                    recipe_name=recipe.name,
+                )
             )
         return list(products_map.values())

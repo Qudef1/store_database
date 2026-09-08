@@ -12,13 +12,17 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Банк данных технологий создания продуктов"
-    debug: bool = False
+    debug: str = "false"
 
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "food_products"
     db_user: str = "postgres"
     db_password: str = "postgres"
+
+    @property
+    def is_debug(self) -> bool:
+        return self.debug.lower() in ("1", "true", "yes", "on")
 
     @property
     def database_url(self) -> str:

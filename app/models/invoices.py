@@ -44,6 +44,7 @@ class Invoice(Base):
 
     supplier: Mapped["Supplier"] = relationship(
         back_populates="invoices",
+        lazy="selectin",
     )
 
     items: Mapped[list["InvoiceItem"]] = relationship(
@@ -101,5 +102,6 @@ class InvoiceItem(Base):
 
     ingredient: Mapped["Ingredient"] = relationship(
         back_populates="invoice_items",
+        lazy="selectin",
     )
     

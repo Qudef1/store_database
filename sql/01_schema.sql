@@ -23,7 +23,7 @@ CREATE TABLE ingredients (
     id                 SERIAL PRIMARY KEY,
     name               VARCHAR(255) NOT NULL UNIQUE,
     calories_per_gram  NUMERIC(12, 4) NOT NULL,
-    CONSTRAINT ck_ingredients_calories_per_gram_positive CHECK (calories_per_gram > 0)
+    CONSTRAINT ck_ingredients_calories_per_gram_positive CHECK (calories_per_gram >= 0)
 );
 
 CREATE TABLE suppliers (

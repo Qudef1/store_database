@@ -20,6 +20,7 @@ class Product(Base):
 
     group: Mapped["ProductGroup"] = relationship(
         back_populates="products",
+        lazy="selectin",
     )
 
     recipes: Mapped[list["Recipe"]] = relationship(

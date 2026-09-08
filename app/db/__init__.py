@@ -9,6 +9,17 @@ from app.db.repositories import (
     get_recipe_repository,
     get_session,
     get_supplier_repository,
+    get_product_service,
+    get_recipe_service,
+    get_supplier_service,
+    get_ingredient_service,
+    get_author_service,
+    get_product_group_service,
+    get_preparation_method_service,
+    get_invoice_service,
+    get_supplier_price_list_service,
+    get_min_calorie_products_service,
+    get_product_recipes_service,
 )
 
 __all__ = [
@@ -22,4 +33,15 @@ __all__ = [
     "get_recipe_repository",
     "get_session",
     "get_supplier_repository",
+    "get_product_service",
+    "get_recipe_service",
+    "get_supplier_service",
+    "get_ingredient_service",
+    "get_author_service",
+    "get_product_group_service",
+    "get_preparation_method_service",
+    "get_invoice_service",
+    "get_supplier_price_list_service",
+    "get_min_calorie_products_service",
+    "get_product_recipes_service",
 ]

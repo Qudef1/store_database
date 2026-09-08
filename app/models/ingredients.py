@@ -12,7 +12,7 @@ class Ingredient(Base):
     __tablename__ = "ingredients"
     __table_args__ = (
         CheckConstraint(
-            "calories_per_gram > 0",
+            "calories_per_gram >= 0",
             name="ingredients_calories_per_gram_positive",
         ),
     )

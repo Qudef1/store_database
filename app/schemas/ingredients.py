@@ -8,7 +8,7 @@ from app.schemas.base import BaseSchema
 class IngredientBase(BaseSchema):
     name: str = Field(max_length=255)
     calories_per_gram: Decimal = Field(
-        gt=0,
+        ge=0,
         max_digits=12,
         decimal_places=4,
     )
@@ -22,7 +22,7 @@ class IngredientUpdate(BaseSchema):
     name: str | None = Field(default=None, max_length=255)
     calories_per_gram: Decimal | None = Field(
         default=None,
-        gt=0,
+        ge=0,
         max_digits=12,
         decimal_places=4,
     )

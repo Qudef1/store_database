@@ -9,4 +9,6 @@ from app.repositories.sqlalchemy.base import BaseRepository
 
 class AuthorRepository(BaseRepository[Author], IRepository[Author]):
     def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session, Author)
+        super().__init__(
+            session, Author, "authors", ("code", "surname", "name", "country", "year")
+        )

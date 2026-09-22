@@ -3,7 +3,6 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Author
-from app.repositories.interfaces.authors import IRepository as IAuthorRepository
 from app.repositories.sqlalchemy.authors import AuthorRepository
 from app.schemas.authors import AuthorCreate, AuthorRead, AuthorUpdate
 
@@ -30,7 +29,7 @@ class AuthorService:
             country=schema.country,
             year=schema.year,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return AuthorRead.model_validate(obj)
 
     async def update(self, id: int, schema: AuthorUpdate) -> AuthorRead | None:
@@ -47,7 +46,8 @@ class AuthorService:
             existing.country = schema.country
         if schema.year is not None:
             existing.year = schema.year
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return AuthorRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

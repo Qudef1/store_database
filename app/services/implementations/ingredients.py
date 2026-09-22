@@ -3,7 +3,6 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Ingredient
-from app.repositories.interfaces.ingredients import IRepository as IIngredientRepository
 from app.repositories.sqlalchemy.ingredients import IngredientRepository
 from app.schemas.ingredients import IngredientCreate, IngredientRead, IngredientUpdate
 
@@ -27,7 +26,7 @@ class IngredientService:
             name=schema.name,
             calories_per_gram=schema.calories_per_gram,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return IngredientRead.model_validate(obj)
 
     async def update(self, id: int, schema: IngredientUpdate) -> IngredientRead | None:
@@ -38,7 +37,8 @@ class IngredientService:
             existing.name = schema.name
         if schema.calories_per_gram is not None:
             existing.calories_per_gram = schema.calories_per_gram
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return IngredientRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

@@ -3,7 +3,6 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Supplier
-from app.repositories.interfaces.suppliers import IRepository as ISupplierRepository
 from app.repositories.sqlalchemy.suppliers import SupplierRepository
 from app.schemas.suppliers import SupplierCreate, SupplierRead, SupplierUpdate
 
@@ -29,7 +28,7 @@ class SupplierService:
             address=schema.address,
             phone=schema.phone,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return SupplierRead.model_validate(obj)
 
     async def update(self, id: int, schema: SupplierUpdate) -> SupplierRead | None:
@@ -44,7 +43,8 @@ class SupplierService:
             existing.address = schema.address
         if schema.phone is not None:
             existing.phone = schema.phone
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return SupplierRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

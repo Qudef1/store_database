@@ -3,7 +3,6 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Invoice
-from app.repositories.interfaces.invoices import IRepository as IInvoiceRepository
 from app.repositories.sqlalchemy.invoices import InvoiceRepository
 from app.schemas.invoices import InvoiceCreate, InvoiceRead, InvoiceUpdate
 
@@ -28,7 +27,7 @@ class InvoiceService:
             number=schema.number,
             invoice_date=schema.invoice_date,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return InvoiceRead.model_validate(obj)
 
     async def update(self, id: int, schema: InvoiceUpdate) -> InvoiceRead | None:
@@ -41,7 +40,8 @@ class InvoiceService:
             existing.number = schema.number
         if schema.invoice_date is not None:
             existing.invoice_date = schema.invoice_date
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return InvoiceRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

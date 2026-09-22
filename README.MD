@@ -10,7 +10,7 @@
 - **Python** 3.11+
 - **PostgreSQL** 15+
 - **FastAPI** — веб-фреймворк
-- **SQLAlchemy** 2.0 (async) — ORM
+- **SQLAlchemy** 2.0 (async) — соединения и транзакции; запросы написаны вручную
 - **Pydantic** 2 — валидация схем
 - **Alembic** — миграции БД
 - **pytest** + **pytest-asyncio** — тестирование
@@ -25,7 +25,7 @@ lab2/
 │   ├── config.py                 # pydantic-settings: конфигурация
 │   ├── main.py                   # Точка входа FastAPI
 │   │
-│   ├── models/                   # ORM-модели SQLAlchemy
+│   ├── models/                   # Описание структуры данных для схемы БД
 │   │   ├── base.py
 │   │   ├── authors.py
 │   │   ├── dictionaries.py       # product_groups, preparation_methods
@@ -48,7 +48,7 @@ lab2/
 │   │
 │   ├── repositories/             # Infrastructure: доступ к данным
 │   │   ├── interfaces/           # Абстракции (IRepository)
-│   │   └── sqlalchemy/           # Реализации на SQLAlchemy
+│   │   └── sqlalchemy/           # Параметризованные SQL-репозитории
 │   │
 │   ├── services/                 # Application: бизнес-логика
 │   │   ├── interfaces/           # Сервисные контракты

@@ -3,7 +3,6 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Recipe
-from app.repositories.interfaces.recipes import IRepository as IRecipeRepository
 from app.repositories.sqlalchemy.recipes import RecipeRepository
 from app.schemas.recipes import RecipeCreate, RecipeListRead, RecipeRead, RecipeUpdate
 
@@ -30,7 +29,7 @@ class RecipeService:
             product_id=schema.product_id,
             author_id=schema.author_id,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return RecipeRead.model_validate(obj)
 
     async def update(self, id: int, schema: RecipeUpdate) -> RecipeRead | None:
@@ -47,7 +46,8 @@ class RecipeService:
             existing.product_id = schema.product_id
         if schema.author_id is not None:
             existing.author_id = schema.author_id
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return RecipeRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

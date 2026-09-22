@@ -9,4 +9,6 @@ from app.repositories.sqlalchemy.base import BaseRepository
 
 class SupplierRepository(BaseRepository[Supplier], IRepository[Supplier]):
     def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session, Supplier)
+        super().__init__(
+            session, Supplier, "suppliers", ("code", "name", "address", "phone")
+        )

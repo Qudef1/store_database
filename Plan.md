@@ -16,19 +16,19 @@
 | `app/repositories/` | ✅ Опечатка исправлена, интерфейсы готовы |
 | `app/services/` | ✅ CRUD-сервисы + отчетные сервисы готовы |
 | SQL DDL + seed | ✅ Созданы `sql/01_schema.sql` и `sql/02_seed.sql` |
-| ORM-модели (`app/models/*.py`) | ✅ Заполнены все 7 файлов |
+| Модели структуры БД (`app/models/*.py`) | ✅ Используются для метаданных, не для запросов |
 | Pydantic-схемы (`app/schemas/*.py`) | ⚠️ Частично готовы (есть базовые, CRUD, reports, queries) |
 | Alembic | ✅ `alembic.ini`, `env.py`, `script.py.mako` настроены |
-| Тесты | ❌ Отсутствуют |
+| Тесты | ✅ CRUD, параметризация SQL и отчётные запросы |
 
 ---
 
-## Этап 1. Фундамент (БД + ORM) — ✅ Выполнен
+## Этап 1. Фундамент (БД) — ✅ Выполнен
 
 - [x] **Переименовать** `app/repositiries` → `app/repositories` (исправить опечатку).
 - [x] **Создать** `sql/01_schema.sql` — DDL PostgreSQL (9 таблиц, FK, CHECK, индексы).
 - [x] **Создать** `sql/02_seed.sql` — тестовые данные.
-- [x] **Реализовать** ORM-модели в `app/models/*.py`:
+- [x] **Описать** модели структуры БД в `app/models/*.py` (ORM-запросы не используются):
   - `authors.py`
   - `dictionaries.py` (product_group, preparation_method)
   - `ingredients.py`
@@ -59,7 +59,7 @@
   - `base.py` — `IRepository[T]` (CRUD)
   - `products.py`, `recipes.py`, `suppliers.py`, `ingredients.py`, `authors.py`, `dictionaries.py`, `invoices.py`
 - [x] **Реализовать** репозитории в `app/repositories/sqlalchemy/`:
-  - `base.py` — `BaseRepository[T]` с通用 CRUD через SQLAlchemy 2.0 async
+  - `base.py` — `BaseRepository[T]` с ручными параметризованными `SELECT`, `INSERT`, `UPDATE`, `DELETE`
   - По одному на сущность: `products.py`, `recipes.py`, `suppliers.py`, `ingredients.py`, `authors.py`, `dictionaries.py`, `invoices.py`
 - [x] **Зарегистрировать** репозитории в `app/db/` (Dependency Injection через `Depends`):
   - `session.py` — `get_session()`, `async_session_maker`

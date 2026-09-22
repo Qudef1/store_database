@@ -3,7 +3,6 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Product
-from app.repositories.interfaces.products import IRepository as IProductRepository
 from app.repositories.sqlalchemy.products import ProductRepository
 from app.schemas.products import ProductCreate, ProductRead, ProductUpdate
 
@@ -27,7 +26,7 @@ class ProductService:
             name=schema.name,
             group_id=schema.group_id,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return ProductRead.model_validate(obj)
 
     async def update(self, id: int, schema: ProductUpdate) -> ProductRead | None:
@@ -38,7 +37,8 @@ class ProductService:
             existing.name = schema.name
         if schema.group_id is not None:
             existing.group_id = schema.group_id
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return ProductRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

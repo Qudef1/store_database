@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import ProductGroup, PreparationMethod
-from app.repositories.interfaces.dictionaries import IRepository as IDictionaryRepository
-from app.repositories.sqlalchemy.dictionaries import ProductGroupRepository, PreparationMethodRepository
+from app.models import PreparationMethod, ProductGroup
+from app.repositories.sqlalchemy.dictionaries import (
+    PreparationMethodRepository,
+    ProductGroupRepository,
+)
 from app.schemas.dictionaries import (
     PreparationMethodCreate,
     PreparationMethodRead,
@@ -25,7 +27,9 @@ class ProductGroupService:
             return None
         return ProductGroupRead.model_validate(obj)
 
-    async def list(self, *, offset: int = 0, limit: int = 100) -> list[ProductGroupRead]:
+    async def list(
+        self, *, offset: int = 0, limit: int = 100
+    ) -> list[ProductGroupRead]:
         objs = await self._repo.list(offset=offset, limit=limit)
         return [ProductGroupRead.model_validate(o) for o in objs]
 
@@ -34,10 +38,12 @@ class ProductGroupService:
             code=schema.code,
             name=schema.name,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return ProductGroupRead.model_validate(obj)
 
-    async def update(self, id: int, schema: ProductGroupUpdate) -> ProductGroupRead | None:
+    async def update(
+        self, id: int, schema: ProductGroupUpdate
+    ) -> ProductGroupRead | None:
         existing = await self._repo.get(id)
         if existing is None:
             return None
@@ -45,7 +51,8 @@ class ProductGroupService:
             existing.code = schema.code
         if schema.name is not None:
             existing.name = schema.name
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return ProductGroupRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:
@@ -62,7 +69,9 @@ class PreparationMethodService:
             return None
         return PreparationMethodRead.model_validate(obj)
 
-    async def list(self, *, offset: int = 0, limit: int = 100) -> list[PreparationMethodRead]:
+    async def list(
+        self, *, offset: int = 0, limit: int = 100
+    ) -> list[PreparationMethodRead]:
         objs = await self._repo.list(offset=offset, limit=limit)
         return [PreparationMethodRead.model_validate(o) for o in objs]
 
@@ -71,10 +80,12 @@ class PreparationMethodService:
             code=schema.code,
             name=schema.name,
         )
-        await self._repo.create(obj)
+        obj = await self._repo.create(obj)
         return PreparationMethodRead.model_validate(obj)
 
-    async def update(self, id: int, schema: PreparationMethodUpdate) -> PreparationMethodRead | None:
+    async def update(
+        self, id: int, schema: PreparationMethodUpdate
+    ) -> PreparationMethodRead | None:
         existing = await self._repo.get(id)
         if existing is None:
             return None
@@ -82,7 +93,8 @@ class PreparationMethodService:
             existing.code = schema.code
         if schema.name is not None:
             existing.name = schema.name
-        await self._repo.update(id, existing)
+        existing = await self._repo.update(id, existing)
+        assert existing is not None
         return PreparationMethodRead.model_validate(existing)
 
     async def delete(self, id: int) -> bool:

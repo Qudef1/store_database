@@ -32,6 +32,9 @@ async def main() -> None:
         groups = responses["product-groups"]
         if not groups:
             raise RuntimeError("Seed data is missing: no product groups")
+        suppliers = responses["suppliers"]
+        if not suppliers:
+            raise RuntimeError("Seed data is missing: no suppliers")
         if responses["recipes"]:
             assert responses["recipes"][0]["author"] is not None
         if responses["invoices"]:
@@ -68,10 +71,16 @@ async def main() -> None:
         deleted = await client.delete(f"/api/v1/products/{product_id}")
         deleted.raise_for_status()
 
-        report_urls = (
+        report_urls = [
             "/api/v1/reports/min-calorie-products",
             "/api/v1/reports/products-with-recipes",
-            "/api/v1/reports/supplier-price-list?supplier_id=1&price_date=2026-01-15",
+        ]
+        supplier = next(
+            (item for item in suppliers if item["code"] == "SUP-001"), suppliers[0]
+        )
+        report_urls.append(
+            "/api/v1/reports/supplier-price-list"
+            f"?supplier_id={supplier['id']}&price_date=2026-01-15"
         )
         for url in report_urls:
             response = await client.get(url)

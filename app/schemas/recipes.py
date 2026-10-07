@@ -65,7 +65,6 @@ class RecipeUpdate(BaseSchema):
     author_id: int | None = None
     ingredients: list[RecipeIngredientCreate] | None = Field(
         default=None,
-        min_length=1,
     )
 
 

@@ -255,6 +255,87 @@
             border-radius: 4px;
             margin: 20px;
         }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .report-card {
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
+            padding: 18px;
+            background: #fff;
+        }
+
+        .report-card h3 {
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .report-card p {
+            margin-bottom: 15px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .report-result {
+            padding: 0 20px 20px;
+            overflow-x: auto;
+        }
+
+        .report-summary {
+            background: #eaf3f8;
+            border-left: 4px solid #3498db;
+            padding: 12px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .btn:disabled {
+            cursor: wait;
+            opacity: 0.65;
+        }
+
+        .nested-editor {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .nested-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .nested-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+            gap: 10px;
+            align-items: end;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .nested-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .nested-row .btn {
+            height: 36px;
+        }
+
+        .muted {
+            color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +440,55 @@
                 <div id="invoices-content"></div>
             </div>
         </div>
+
+        <!-- Reports -->
+        <div class="table-section" id="reports-section">
+            <div class="table-header">
+                <h2>Отчёты</h2>
+            </div>
+
+            <div class="reports-grid">
+                <div class="report-card">
+                    <h3>Прайс-лист поставщика</h3>
+                    <p>Показывает цены ингредиентов выбранного поставщика на указанную дату.</p>
+                    <form id="price-list-form">
+                        <div class="form-group">
+                            <label for="report-supplier-id">Поставщик</label>
+                            <select id="report-supplier-id" required>
+                                <option value="">Загрузка поставщиков...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="report-price-date">Дата</label>
+                            <input id="report-price-date" type="date" required>
+                        </div>
+                        <button id="price-list-button" type="submit" class="btn btn-primary">
+                            Сформировать
+                        </button>
+                    </form>
+                </div>
+
+                <div class="report-card">
+                    <h3>Минимальная калорийность</h3>
+                    <p>Находит рецепты с наименьшей расчётной калорийностью.</p>
+                    <button id="min-calories-button" type="button" class="btn btn-primary">
+                        Сформировать
+                    </button>
+                </div>
+
+                <div class="report-card">
+                    <h3>Товары с рецептами</h3>
+                    <p>Выводит товары, их группы и все связанные рецепты.</p>
+                    <button id="products-recipes-button" type="button" class="btn btn-primary">
+                        Сформировать
+                    </button>
+                </div>
+            </div>
+
+            <div id="price-list-result" class="report-result"></div>
+            <div id="min-calories-result" class="report-result"></div>
+            <div id="products-recipes-result" class="report-result"></div>
+        </div>
     </div>
 
     <!-- Modal for Add/Edit -->
@@ -376,6 +506,8 @@
         const API_BASE = '/api/v1';
         let currentTable = null;
         let currentEditId = null;
+        const tableData = {};
+        let nestedRowCounter = 0;
 
         // Table configurations
         const tableConfigs = {
@@ -383,7 +515,7 @@
                 apiPath: '/products',
                 fields: [
                     { name: 'name', label: 'Название', type: 'text', required: true },
-                    { name: 'group_id', label: 'ID группы', type: 'number', required: true }
+                    { name: 'group_id', label: 'Группа', type: 'select', source: 'product-groups', required: true }
                 ],
                 columns: ['id', 'name', 'group_id']
             },
@@ -393,10 +525,20 @@
                     { name: 'number', label: 'Номер', type: 'text', required: true },
                     { name: 'name', label: 'Название', type: 'text', required: true },
                     { name: 'description', label: 'Описание', type: 'textarea', required: false },
-                    { name: 'product_id', label: 'ID товара', type: 'number', required: true },
-                    { name: 'author_id', label: 'ID автора', type: 'number', required: true }
+                    { name: 'product_id', label: 'Товар', type: 'select', source: 'products', required: true },
+                    { name: 'author_id', label: 'Автор', type: 'select', source: 'authors', required: true }
                 ],
-                columns: ['id', 'number', 'name', 'description', 'product_id', 'author_id']
+                columns: ['id', 'number', 'name', 'description', 'product_id', 'author_id', 'ingredients'],
+                nested: {
+                    name: 'ingredients',
+                    label: 'Состав рецепта',
+                    addLabel: '+ Добавить ингредиент',
+                    fields: [
+                        { name: 'ingredient_id', label: 'Ингредиент', type: 'select', source: 'ingredients', required: true },
+                        { name: 'preparation_method_id', label: 'Способ подготовки', type: 'select', source: 'preparation-methods', required: true },
+                        { name: 'grams_per_kg', label: 'Граммов на 1 кг', type: 'number', step: '0.001', min: 0.001, required: true }
+                    ]
+                }
             },
             suppliers: {
                 apiPath: '/suppliers',
@@ -423,7 +565,7 @@
                 apiPath: '/ingredients',
                 fields: [
                     { name: 'name', label: 'Название', type: 'text', required: true },
-                    { name: 'calories_per_gram', label: 'Калории на грамм', type: 'number', required: true, step: '0.0001' }
+                    { name: 'calories_per_gram', label: 'Калории на грамм', type: 'number', required: true, step: '0.0001', min: 0 }
                 ],
                 columns: ['id', 'name', 'calories_per_gram']
             },
@@ -447,17 +589,41 @@
                 apiPath: '/invoices',
                 fields: [
                     { name: 'number', label: 'Номер', type: 'text', required: false },
-                    { name: 'supplier_id', label: 'ID поставщика', type: 'number', required: true },
+                    { name: 'supplier_id', label: 'Поставщик', type: 'select', source: 'suppliers', required: true },
                     { name: 'invoice_date', label: 'Дата', type: 'date', required: true }
                 ],
-                columns: ['id', 'number', 'supplier_id', 'invoice_date']
+                columns: ['id', 'number', 'supplier_id', 'invoice_date', 'items'],
+                nested: {
+                    name: 'items',
+                    label: 'Позиции накладной',
+                    addLabel: '+ Добавить позицию',
+                    fields: [
+                        { name: 'ingredient_id', label: 'Ингредиент', type: 'select', source: 'ingredients', required: true },
+                        { name: 'quantity', label: 'Количество', type: 'number', step: '0.001', min: 0.001, required: true },
+                        { name: 'unit_price', label: 'Цена единицы', type: 'number', step: '0.0001', min: 0.0001, required: true }
+                    ]
+                }
             }
         };
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadAllTables();
+            loadSupplierOptions();
+            document.getElementById('report-price-date').value = getLocalDateValue();
+            document.getElementById('price-list-form').addEventListener('submit', (event) => {
+                event.preventDefault();
+                loadSupplierPriceList();
+            });
+            document.getElementById('min-calories-button').addEventListener('click', loadMinCalories);
+            document.getElementById('products-recipes-button').addEventListener('click', loadProductsWithRecipes);
         });
+
+        function getLocalDateValue() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60 * 1000;
+            return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+        }
 
         async function loadAllTables() {
             for (const tableName of Object.keys(tableConfigs)) {
@@ -474,6 +640,7 @@
                 const response = await fetch(`${API_BASE}${config.apiPath}/`);
                 if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();
+                tableData[tableName] = data;
                 renderTable(tableName, data, config);
                 if (loading) loading.style.display = 'none';
             } catch (error) {
@@ -497,7 +664,7 @@
             data.forEach(item => {
                 html += '<tr>';
                 config.columns.forEach(col => {
-                    html += `<td>${item[col] !== null ? item[col] : '-'}</td>`;
+                    html += `<td>${escapeHtml(getTableCellValue(tableName, col, item))}</td>`;
                 });
                 html += `<td class="actions">
                     <button class="btn btn-warning" onclick="editItem('${tableName}', ${item.id})">Редактировать</button>
@@ -527,9 +694,57 @@
                 product_id: 'Товар',
                 author_id: 'Автор',
                 supplier_id: 'Поставщик',
-                invoice_date: 'Дата накладной'
+                invoice_date: 'Дата накладной',
+                ingredients: 'Состав рецепта',
+                items: 'Позиции накладной'
             };
             return labels[col] || col;
+        }
+
+        function getTableCellValue(tableName, column, item) {
+            if (tableName === 'products' && column === 'group_id') {
+                return item.group?.name || getReferenceLabel('product-groups', item.group_id);
+            }
+            if (tableName === 'recipes' && column === 'product_id') {
+                return getReferenceLabel('products', item.product_id);
+            }
+            if (tableName === 'recipes' && column === 'author_id') {
+                return item.author
+                    ? `${item.author.surname} ${item.author.name}`
+                    : getReferenceLabel('authors', item.author_id);
+            }
+            if (tableName === 'recipes' && column === 'ingredients') {
+                if (!item.ingredients?.length) return 'Состав не указан';
+                return item.ingredients.map(part => {
+                    const ingredient = part.ingredient?.name
+                        || getReferenceLabel('ingredients', part.ingredient_id);
+                    const method = part.preparation_method?.name
+                        || getReferenceLabel('preparation-methods', part.preparation_method_id);
+                    return `${ingredient}: ${formatNumber(part.grams_per_kg)} г (${method})`;
+                }).join('; ');
+            }
+            if (tableName === 'invoices' && column === 'supplier_id') {
+                return item.supplier?.name || getReferenceLabel('suppliers', item.supplier_id);
+            }
+            if (tableName === 'invoices' && column === 'items') {
+                if (!item.items?.length) return 'Позиции не указаны';
+                return item.items.map(part => {
+                    const ingredient = part.ingredient?.name
+                        || getReferenceLabel('ingredients', part.ingredient_id);
+                    return `${ingredient}: ${formatNumber(part.quantity)} × ${formatNumber(part.unit_price)}`;
+                }).join('; ');
+            }
+
+            const value = item[column];
+            return value === null || value === undefined || value === '' ? '—' : value;
+        }
+
+        function getReferenceLabel(source, id) {
+            const item = (tableData[source] || []).find(candidate => String(candidate.id) === String(id));
+            if (!item) return `ID ${id}`;
+            if (source === 'authors') return `${item.surname} ${item.name}`;
+            if (item.code) return `${item.name} (${item.code})`;
+            return item.name || `ID ${id}`;
         }
 
         function openModal(tableName, editId = null) {
@@ -544,18 +759,24 @@
 
             let html = '<form id="modal-form">';
             config.fields.forEach(field => {
-                html += `<div class="form-group">
-                    <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>`;
-                
-                if (field.type === 'textarea') {
-                    html += `<textarea id="${field.name}" name="${field.name}" ${field.required ? 'required' : ''}></textarea>`;
-                } else {
-                    html += `<input type="${field.type}" id="${field.name}" name="${field.name}" 
-                        ${field.required ? 'required' : ''} ${field.step ? `step="${field.step}"` : ''}>`;
-                }
-                
-                html += '</div>';
+                html += renderFormField(field);
             });
+
+            if (config.nested) {
+                html += `
+                    <div class="nested-editor">
+                        <div class="nested-editor-header">
+                            <div>
+                                <strong>${escapeHtml(config.nested.label)}</strong>
+                                <div class="muted">Строки сохраняются вместе с основной записью.</div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="addNestedRow()">
+                                ${escapeHtml(config.nested.addLabel)}
+                            </button>
+                        </div>
+                        <div id="nested-rows"></div>
+                    </div>`;
+            }
 
             html += `<div class="form-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
@@ -568,6 +789,8 @@
             // If editing, load existing data
             if (editId) {
                 loadItemForEdit(tableName, editId);
+            } else if (config.nested) {
+                addNestedRow();
             }
 
             // Form submit handler
@@ -583,6 +806,105 @@
             currentEditId = null;
         }
 
+        function renderFormField(field) {
+            const required = field.required ? 'required' : '';
+            const step = field.step ? `step="${field.step}"` : '';
+            const min = field.min !== undefined ? `min="${field.min}"` : '';
+            let control;
+
+            if (field.type === 'textarea') {
+                control = `<textarea id="${field.name}" name="${field.name}" ${required}></textarea>`;
+            } else if (field.type === 'select') {
+                control = `
+                    <select id="${field.name}" name="${field.name}" ${required}>
+                        <option value="">Выберите значение</option>
+                        ${getReferenceOptionsHtml(field.source)}
+                    </select>`;
+            } else {
+                control = `<input type="${field.type}" id="${field.name}" name="${field.name}"
+                    ${required} ${step} ${min}>`;
+            }
+
+            return `
+                <div class="form-group">
+                    <label for="${field.name}">${escapeHtml(field.label)}${field.required ? ' *' : ''}</label>
+                    ${control}
+                </div>`;
+        }
+
+        function getReferenceOptionsHtml(source, selectedValue = null) {
+            return (tableData[source] || []).map(item => {
+                const selected = String(item.id) === String(selectedValue) ? 'selected' : '';
+                return `<option value="${item.id}" ${selected}>${escapeHtml(getReferenceLabel(source, item.id))}</option>`;
+            }).join('');
+        }
+
+        function renderNestedRows(items) {
+            const container = document.getElementById('nested-rows');
+            if (!container) return;
+            container.innerHTML = '';
+            items.forEach(item => addNestedRow(item));
+        }
+
+        function addNestedRow(initial = {}) {
+            const nested = tableConfigs[currentTable]?.nested;
+            const container = document.getElementById('nested-rows');
+            if (!nested || !container) return;
+
+            const rowIndex = nestedRowCounter++;
+            const row = document.createElement('div');
+            row.className = 'nested-row';
+            row.dataset.rowIndex = rowIndex;
+
+            const fields = nested.fields.map(field => {
+                const value = initial[field.name] ?? '';
+                const required = field.required ? 'required' : '';
+                let control;
+                if (field.type === 'select') {
+                    control = `
+                        <select data-field="${field.name}" ${required}>
+                            <option value="">Выберите значение</option>
+                            ${getReferenceOptionsHtml(field.source, value)}
+                        </select>`;
+                } else {
+                    const step = field.step ? `step="${field.step}"` : '';
+                    const min = field.min !== undefined ? `min="${field.min}"` : '';
+                    control = `<input type="${field.type}" data-field="${field.name}"
+                        value="${escapeHtml(value)}" ${required} ${step} ${min}>`;
+                }
+                return `
+                    <div class="form-group">
+                        <label>${escapeHtml(field.label)}${field.required ? ' *' : ''}</label>
+                        ${control}
+                    </div>`;
+            }).join('');
+
+            row.innerHTML = `${fields}
+                <button type="button" class="btn btn-danger" onclick="removeNestedRow(this)">
+                    Удалить строку
+                </button>`;
+            container.appendChild(row);
+        }
+
+        function removeNestedRow(button) {
+            button.closest('.nested-row')?.remove();
+        }
+
+        function collectNestedRows(nested) {
+            return Array.from(document.querySelectorAll('#nested-rows .nested-row')).map(row => {
+                const item = {};
+                nested.fields.forEach(field => {
+                    const input = row.querySelector(`[data-field="${field.name}"]`);
+                    let value = input.value;
+                    if (field.type === 'number' || field.type === 'select') {
+                        value = Number(value);
+                    }
+                    item[field.name] = value;
+                });
+                return item;
+            });
+        }
+
         async function loadItemForEdit(tableName, id) {
             const config = tableConfigs[tableName];
             try {
@@ -596,6 +918,9 @@
                         input.value = data[field.name];
                     }
                 });
+                if (config.nested) {
+                    renderNestedRows(data[config.nested.name] || []);
+                }
             } catch (error) {
                 alert('Ошибка загрузки данных: ' + error.message);
             }
@@ -614,12 +939,16 @@
                     return;
                 }
                 
-                if (field.type === 'number') {
+                if (field.type === 'number' || field.type === 'select') {
                     value = parseFloat(value);
                 }
                 
                 formData[field.name] = value;
             });
+
+            if (config.nested) {
+                formData[config.nested.name] = collectNestedRows(config.nested);
+            }
 
             const url = currentEditId 
                 ? `${API_BASE}${config.apiPath}/${currentEditId}`
@@ -642,7 +971,10 @@
 
                 const tableToReload = currentTable;
                 closeModal();
-                loadTable(tableToReload);
+                await loadAllTables();
+                if (tableToReload === 'suppliers') {
+                    await loadSupplierOptions();
+                }
             } catch (error) {
                 alert('Ошибка: ' + error.message);
             }
@@ -664,7 +996,10 @@
                     throw new Error(await getErrorMessage(response, 'Ошибка удаления'));
                 }
                 
-                loadTable(tableName);
+                await loadAllTables();
+                if (tableName === 'suppliers') {
+                    await loadSupplierOptions();
+                }
             } catch (error) {
                 alert('Ошибка удаления: ' + error.message);
             }
@@ -684,6 +1019,184 @@
 
         function editItem(tableName, id) {
             openModal(tableName, id);
+        }
+
+        async function loadSupplierOptions() {
+            const select = document.getElementById('report-supplier-id');
+            const previousValue = select.value;
+
+            try {
+                const response = await fetch(`${API_BASE}/suppliers/`);
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Ошибка загрузки поставщиков'));
+                }
+
+                const suppliers = await response.json();
+                if (suppliers.length === 0) {
+                    select.innerHTML = '<option value="">Поставщики отсутствуют</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">Выберите поставщика</option>' + suppliers
+                    .map(supplier => (
+                        `<option value="${supplier.id}">${escapeHtml(supplier.name)} (${escapeHtml(supplier.code)})</option>`
+                    ))
+                    .join('');
+
+                if (suppliers.some(supplier => String(supplier.id) === previousValue)) {
+                    select.value = previousValue;
+                }
+            } catch (error) {
+                select.innerHTML = `<option value="">${escapeHtml(error.message)}</option>`;
+            }
+        }
+
+        async function loadSupplierPriceList() {
+            const supplierId = document.getElementById('report-supplier-id').value;
+            const priceDate = document.getElementById('report-price-date').value;
+            const result = document.getElementById('price-list-result');
+            const button = document.getElementById('price-list-button');
+
+            if (!supplierId || !priceDate) {
+                result.innerHTML = '<div class="alert alert-error">Выберите поставщика и дату.</div>';
+                return;
+            }
+
+            setReportLoading(button, result, true);
+            try {
+                const params = new URLSearchParams({
+                    supplier_id: supplierId,
+                    price_date: priceDate,
+                });
+                const response = await fetch(`${API_BASE}/reports/supplier-price-list?${params}`);
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Не удалось сформировать прайс-лист'));
+                }
+
+                const data = await response.json();
+                const summary = `
+                    <div class="report-summary">
+                        <strong>Поставщик:</strong> ${escapeHtml(data.supplier.name)}<br>
+                        <strong>Дата:</strong> ${escapeHtml(data.price_date)}
+                    </div>`;
+                result.innerHTML = summary + renderReportTable(data.items, [
+                    { key: 'ingredient_id', label: 'ID ингредиента' },
+                    { key: 'ingredient_name', label: 'Ингредиент' },
+                    { key: 'unit_price', label: 'Цена', format: formatNumber },
+                    { key: 'invoice_number', label: 'Накладная' },
+                ]);
+            } catch (error) {
+                result.innerHTML = `<div class="alert alert-error">${escapeHtml(error.message)}</div>`;
+            } finally {
+                setReportLoading(button, result, false);
+            }
+        }
+
+        async function loadMinCalories() {
+            const result = document.getElementById('min-calories-result');
+            const button = document.getElementById('min-calories-button');
+            setReportLoading(button, result, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/reports/min-calorie-products`);
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Не удалось сформировать отчёт'));
+                }
+
+                const data = await response.json();
+                const summary = `
+                    <div class="report-summary">
+                        <strong>Минимальная калорийность:</strong>
+                        ${formatNumber(data.min_calories_per_100g)} ккал на 100 г
+                    </div>`;
+                result.innerHTML = summary + renderReportTable(data.items, [
+                    { key: 'product_name', label: 'Товар' },
+                    { key: 'group_name', label: 'Группа' },
+                    { key: 'recipe_name', label: 'Рецепт' },
+                    { key: 'calories_per_100g', label: 'ккал / 100 г', format: formatNumber },
+                    { key: 'calories_per_1kg', label: 'ккал / 1 кг', format: formatNumber },
+                ]);
+            } catch (error) {
+                result.innerHTML = `<div class="alert alert-error">${escapeHtml(error.message)}</div>`;
+            } finally {
+                setReportLoading(button, result, false);
+            }
+        }
+
+        async function loadProductsWithRecipes() {
+            const result = document.getElementById('products-recipes-result');
+            const button = document.getElementById('products-recipes-button');
+            setReportLoading(button, result, true);
+
+            try {
+                const response = await fetch(`${API_BASE}/reports/products-with-recipes`);
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Не удалось сформировать отчёт'));
+                }
+
+                const products = await response.json();
+                const rows = products.flatMap(product => product.recipes.map(recipe => ({
+                    product_id: product.product_id,
+                    product_name: product.product_name,
+                    group_name: product.group_name,
+                    recipe_number: recipe.recipe_number,
+                    recipe_name: recipe.recipe_name,
+                })));
+                result.innerHTML = renderReportTable(rows, [
+                    { key: 'product_id', label: 'ID товара' },
+                    { key: 'product_name', label: 'Товар' },
+                    { key: 'group_name', label: 'Группа' },
+                    { key: 'recipe_number', label: 'Номер рецепта' },
+                    { key: 'recipe_name', label: 'Рецепт' },
+                ]);
+            } catch (error) {
+                result.innerHTML = `<div class="alert alert-error">${escapeHtml(error.message)}</div>`;
+            } finally {
+                setReportLoading(button, result, false);
+            }
+        }
+
+        function renderReportTable(rows, columns) {
+            if (!rows || rows.length === 0) {
+                return '<div class="empty-state">По заданным условиям данные не найдены.</div>';
+            }
+
+            const header = columns.map(column => `<th>${escapeHtml(column.label)}</th>`).join('');
+            const body = rows.map(row => {
+                const cells = columns.map(column => {
+                    const rawValue = row[column.key];
+                    const value = rawValue === null || rawValue === undefined || rawValue === ''
+                        ? '—'
+                        : (column.format ? column.format(rawValue) : rawValue);
+                    return `<td>${escapeHtml(value)}</td>`;
+                }).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+        }
+
+        function formatNumber(value) {
+            const number = Number(value);
+            if (!Number.isFinite(number)) {
+                return value;
+            }
+            return new Intl.NumberFormat('ru-RU', {
+                maximumFractionDigits: 4,
+            }).format(number);
+        }
+
+        function escapeHtml(value) {
+            const element = document.createElement('div');
+            element.textContent = String(value);
+            return element.innerHTML;
+        }
+
+        function setReportLoading(button, result, isLoading) {
+            button.disabled = isLoading;
+            if (isLoading) {
+                result.innerHTML = '<div class="loading">Формирование отчёта...</div>';
+            }
         }
 
         // Close modal on outside click

@@ -39,9 +39,9 @@ class SupplierService:
             existing.code = schema.code
         if schema.name is not None:
             existing.name = schema.name
-        if schema.address is not None:
+        if "address" in schema.model_fields_set:
             existing.address = schema.address
-        if schema.phone is not None:
+        if "phone" in schema.model_fields_set:
             existing.phone = schema.phone
         existing = await self._repo.update(id, existing)
         assert existing is not None

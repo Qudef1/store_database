@@ -1,0 +1,71 @@
+@startuml
+title Диаграмма вариантов использования информационной системы
+
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam packageStyle rectangle
+skinparam ArrowColor #334155
+skinparam actor {
+  BorderColor #1E3A5F
+  FontColor #0F172A
+}
+skinparam usecase {
+  BackgroundColor #EAF3F8
+  BorderColor #1E3A5F
+  FontColor #0F172A
+}
+
+actor "Пользователь\nприложения" as User
+
+rectangle "Информационная система учёта рецептур и поставок" {
+  package "Ведение данных" {
+    usecase "Вести группы\nтоваров" as UC_Groups
+    usecase "Вести товары" as UC_Products
+    usecase "Вести рецепты" as UC_Recipes
+    usecase "Вести ингредиенты" as UC_Ingredients
+    usecase "Вести способы\nподготовки" as UC_Methods
+    usecase "Вести авторов" as UC_Authors
+    usecase "Вести поставщиков" as UC_Suppliers
+    usecase "Вести накладные" as UC_Invoices
+  }
+
+  package "Формирование отчётов" {
+    usecase "Получить прайс-лист\nпоставщика на дату" as UC_PriceList
+    usecase "Найти товары с минимальной\nрасчётной калорийностью" as UC_MinCalories
+    usecase "Получить товары\nс рецептами" as UC_ProductRecipes
+  }
+
+  usecase "Проверить\nвведённые данные" as UC_Validate
+}
+
+User --> UC_Groups
+User --> UC_Products
+User --> UC_Recipes
+User --> UC_Ingredients
+User --> UC_Methods
+User --> UC_Authors
+User --> UC_Suppliers
+User --> UC_Invoices
+User --> UC_PriceList
+User --> UC_MinCalories
+User --> UC_ProductRecipes
+
+UC_Groups ..> UC_Validate : <<include>>
+UC_Products ..> UC_Validate : <<include>>
+UC_Recipes ..> UC_Validate : <<include>>
+UC_Ingredients ..> UC_Validate : <<include>>
+UC_Methods ..> UC_Validate : <<include>>
+UC_Authors ..> UC_Validate : <<include>>
+UC_Suppliers ..> UC_Validate : <<include>>
+UC_Invoices ..> UC_Validate : <<include>>
+
+legend right
+  |= Обозначение |= Назначение |
+  | Сплошная стрелка | Инициирование варианта использования |
+  | <<include>> | Обязательное включаемое поведение |
+endlegend
+@enduml

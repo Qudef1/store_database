@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from sqlalchemy import text
+from sqlalchemy import Numeric, bindparam, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
@@ -22,6 +23,109 @@ class RecipeRepository(BaseRepository[Recipe], IRepository[Recipe]):
             "recipes",
             ("number", "name", "description", "product_id", "author_id"),
         )
+
+    async def create(self, obj: Recipe) -> Recipe:
+        recipe_sql = text(
+            """
+            INSERT INTO recipes (number, name, description, product_id, author_id)
+            VALUES (:number, :name, :description, :product_id, :author_id)
+            RETURNING id
+            """
+        )
+        try:
+            recipe_id = (
+                await self._session.execute(
+                    recipe_sql,
+                    {
+                        "number": obj.number,
+                        "name": obj.name,
+                        "description": obj.description,
+                        "product_id": obj.product_id,
+                        "author_id": obj.author_id,
+                    },
+                )
+            ).scalar_one()
+            await self._replace_ingredients(recipe_id, obj.ingredients)
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            self._raise_conflict(exc)
+        except Exception:
+            await self._session.rollback()
+            raise
+
+        created = await self.get(recipe_id)
+        assert created is not None
+        return created
+
+    async def update(self, id: int, obj: Recipe) -> Recipe | None:
+        recipe_sql = text(
+            """
+            UPDATE recipes
+            SET number = :number,
+                name = :name,
+                description = :description,
+                product_id = :product_id,
+                author_id = :author_id
+            WHERE id = :id
+            RETURNING id
+            """
+        )
+        try:
+            updated_id = (
+                await self._session.execute(
+                    recipe_sql,
+                    {
+                        "id": id,
+                        "number": obj.number,
+                        "name": obj.name,
+                        "description": obj.description,
+                        "product_id": obj.product_id,
+                        "author_id": obj.author_id,
+                    },
+                )
+            ).scalar_one_or_none()
+            if updated_id is None:
+                await self._session.rollback()
+                return None
+            await self._replace_ingredients(updated_id, obj.ingredients)
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            self._raise_conflict(exc)
+        except Exception:
+            await self._session.rollback()
+            raise
+
+        return await self.get(updated_id)
+
+    async def _replace_ingredients(
+        self,
+        recipe_id: int,
+        ingredients: list[RecipeIngredient],
+    ) -> None:
+        await self._session.execute(
+            text("DELETE FROM recipe_ingredients WHERE recipe_id = :recipe_id"),
+            {"recipe_id": recipe_id},
+        )
+        item_sql = text(
+            """
+            INSERT INTO recipe_ingredients
+                (recipe_id, ingredient_id, preparation_method_id, grams_per_kg)
+            VALUES
+                (:recipe_id, :ingredient_id, :preparation_method_id, :grams_per_kg)
+            """
+        ).bindparams(bindparam("grams_per_kg", type_=Numeric(12, 3)))
+        for item in ingredients:
+            await self._session.execute(
+                item_sql,
+                {
+                    "recipe_id": recipe_id,
+                    "ingredient_id": item.ingredient_id,
+                    "preparation_method_id": item.preparation_method_id,
+                    "grams_per_kg": item.grams_per_kg,
+                },
+            )
 
     async def get(self, id: int) -> Recipe | None:
         rows = await self._load(

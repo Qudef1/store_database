@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Invoice
+from app.models import Invoice, InvoiceItem
 from app.repositories.sqlalchemy.invoices import InvoiceRepository
 from app.schemas.invoices import InvoiceCreate, InvoiceRead, InvoiceUpdate
 
@@ -27,6 +27,14 @@ class InvoiceService:
             number=schema.number,
             invoice_date=schema.invoice_date,
         )
+        obj.items = [
+            InvoiceItem(
+                ingredient_id=item.ingredient_id,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+            )
+            for item in schema.items
+        ]
         obj = await self._repo.create(obj)
         return InvoiceRead.model_validate(obj)
 
@@ -36,10 +44,19 @@ class InvoiceService:
             return None
         if schema.supplier_id is not None:
             existing.supplier_id = schema.supplier_id
-        if schema.number is not None:
+        if "number" in schema.model_fields_set:
             existing.number = schema.number
         if schema.invoice_date is not None:
             existing.invoice_date = schema.invoice_date
+        if schema.items is not None:
+            existing.items = [
+                InvoiceItem(
+                    ingredient_id=item.ingredient_id,
+                    quantity=item.quantity,
+                    unit_price=item.unit_price,
+                )
+                for item in schema.items
+            ]
         existing = await self._repo.update(id, existing)
         assert existing is not None
         return InvoiceRead.model_validate(existing)

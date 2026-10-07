@@ -1,0 +1,132 @@
+@startuml
+title Физическая схема базы данных PostgreSQL
+
+top to bottom direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 200
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor #F8FBFD
+  BorderColor #1E3A5F
+  FontColor #0F172A
+}
+hide circle
+
+entity "product_groups" as product_groups {
+  * id : SERIAL <<PK>>
+  --
+  * code : VARCHAR(32) <<UQ>>
+  * name : VARCHAR(255)
+}
+
+entity "products" as products {
+  * id : SERIAL <<PK>>
+  --
+  * name : VARCHAR(255)
+  * group_id : INTEGER <<FK>>
+}
+
+entity "authors" as authors {
+  * id : SERIAL <<PK>>
+  --
+  * code : VARCHAR(32) <<UQ>>
+  * surname : VARCHAR(255)
+  * name : VARCHAR(255)
+  * country : VARCHAR(255)
+  * year : INTEGER
+}
+
+entity "recipes" as recipes {
+  * id : SERIAL <<PK>>
+  --
+  * number : VARCHAR(64) <<UQ>>
+  * name : VARCHAR(255)
+  description : TEXT <<NULL>>
+  * product_id : INTEGER <<FK>>
+  * author_id : INTEGER <<FK>>
+}
+
+entity "ingredients" as ingredients {
+  * id : SERIAL <<PK>>
+  --
+  * name : VARCHAR(255) <<UQ>>
+  * calories_per_gram : NUMERIC(12,4)
+}
+
+entity "preparation_methods" as preparation_methods {
+  * id : SERIAL <<PK>>
+  --
+  * code : VARCHAR(32) <<UQ>>
+  * name : VARCHAR(255)
+}
+
+entity "recipe_ingredients" as recipe_ingredients #FFF1DF {
+  * id : SERIAL <<PK>>
+  --
+  * recipe_id : INTEGER <<FK>>
+  * ingredient_id : INTEGER <<FK>>
+  * preparation_method_id : INTEGER <<FK>>
+  * grams_per_kg : NUMERIC(12,3)
+  --
+  UQ (recipe_id, ingredient_id,
+      preparation_method_id)
+}
+
+entity "suppliers" as suppliers {
+  * id : SERIAL <<PK>>
+  --
+  * code : VARCHAR(32) <<UQ>>
+  * name : VARCHAR(255)
+  address : VARCHAR(255) <<NULL>>
+  phone : VARCHAR(32) <<NULL>>
+}
+
+entity "invoices" as invoices {
+  * id : SERIAL <<PK>>
+  --
+  * supplier_id : INTEGER <<FK>>
+  number : VARCHAR(64) <<NULL>>
+  * invoice_date : DATE
+  --
+  UQ (supplier_id, number)
+}
+
+entity "invoice_items" as invoice_items #FFF1DF {
+  * id : SERIAL <<PK>>
+  --
+  * invoice_id : INTEGER <<FK>>
+  * ingredient_id : INTEGER <<FK>>
+  * quantity : NUMERIC(14,3)
+  * unit_price : NUMERIC(14,4)
+  --
+  UQ (invoice_id, ingredient_id)
+  CHECK (quantity > 0)
+  CHECK (unit_price > 0)
+}
+
+product_groups ||--o{ products : "group_id\nON DELETE RESTRICT"
+products ||--o{ recipes : "product_id\nON DELETE CASCADE"
+authors ||--o{ recipes : "author_id\nON DELETE RESTRICT"
+recipes ||--o{ recipe_ingredients : "recipe_id\nON DELETE CASCADE"
+ingredients ||--o{ recipe_ingredients : "ingredient_id\nON DELETE RESTRICT"
+preparation_methods ||--o{ recipe_ingredients : "preparation_method_id\nON DELETE RESTRICT"
+suppliers ||--o{ invoices : "supplier_id\nON DELETE RESTRICT"
+invoices ||--o{ invoice_items : "invoice_id\nON DELETE CASCADE"
+ingredients ||--o{ invoice_items : "ingredient_id\nON DELETE RESTRICT"
+
+note right of ingredients
+  CHECK (calories_per_gram >= 0)
+end note
+
+legend right
+  |= Маркер |= Значение |
+  | * | NOT NULL |
+  | PK | первичный ключ |
+  | FK | внешний ключ |
+  | UQ | уникальное ограничение |
+  | NULL | поле допускает NULL |
+endlegend
+@enduml

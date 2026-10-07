@@ -63,7 +63,6 @@ class InvoiceUpdate(BaseSchema):
     invoice_date: date | None = None
     items: list[InvoiceItemCreate] | None = Field(
         default=None,
-        min_length=1,
     )
 
 

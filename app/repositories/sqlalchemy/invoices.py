@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from sqlalchemy import Date, Numeric, text
+from sqlalchemy import Date, Numeric, bindparam, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Ingredient, Invoice, InvoiceItem, Supplier
@@ -17,6 +18,106 @@ class InvoiceRepository(BaseRepository[Invoice], IRepository[Invoice]):
             ("supplier_id", "number", "invoice_date"),
             {"invoice_date": Date()},
         )
+
+    async def create(self, obj: Invoice) -> Invoice:
+        invoice_sql = text(
+            """
+            INSERT INTO invoices (supplier_id, number, invoice_date)
+            VALUES (:supplier_id, :number, :invoice_date)
+            RETURNING id
+            """
+        ).bindparams(bindparam("invoice_date", type_=Date()))
+        try:
+            invoice_id = (
+                await self._session.execute(
+                    invoice_sql,
+                    {
+                        "supplier_id": obj.supplier_id,
+                        "number": obj.number,
+                        "invoice_date": obj.invoice_date,
+                    },
+                )
+            ).scalar_one()
+            await self._replace_items(invoice_id, obj.items)
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            self._raise_conflict(exc)
+        except Exception:
+            await self._session.rollback()
+            raise
+
+        created = await self.get(invoice_id)
+        assert created is not None
+        return created
+
+    async def update(self, id: int, obj: Invoice) -> Invoice | None:
+        invoice_sql = text(
+            """
+            UPDATE invoices
+            SET supplier_id = :supplier_id,
+                number = :number,
+                invoice_date = :invoice_date
+            WHERE id = :id
+            RETURNING id
+            """
+        ).bindparams(bindparam("invoice_date", type_=Date()))
+        try:
+            updated_id = (
+                await self._session.execute(
+                    invoice_sql,
+                    {
+                        "id": id,
+                        "supplier_id": obj.supplier_id,
+                        "number": obj.number,
+                        "invoice_date": obj.invoice_date,
+                    },
+                )
+            ).scalar_one_or_none()
+            if updated_id is None:
+                await self._session.rollback()
+                return None
+            await self._replace_items(updated_id, obj.items)
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            self._raise_conflict(exc)
+        except Exception:
+            await self._session.rollback()
+            raise
+
+        return await self.get(updated_id)
+
+    async def _replace_items(
+        self,
+        invoice_id: int,
+        items: list[InvoiceItem],
+    ) -> None:
+        await self._session.execute(
+            text("DELETE FROM invoice_items WHERE invoice_id = :invoice_id"),
+            {"invoice_id": invoice_id},
+        )
+        item_sql = text(
+            """
+            INSERT INTO invoice_items
+                (invoice_id, ingredient_id, quantity, unit_price)
+            VALUES
+                (:invoice_id, :ingredient_id, :quantity, :unit_price)
+            """
+        ).bindparams(
+            bindparam("quantity", type_=Numeric(14, 3)),
+            bindparam("unit_price", type_=Numeric(14, 4)),
+        )
+        for item in items:
+            await self._session.execute(
+                item_sql,
+                {
+                    "invoice_id": invoice_id,
+                    "ingredient_id": item.ingredient_id,
+                    "quantity": item.quantity,
+                    "unit_price": item.unit_price,
+                },
+            )
 
     async def get(self, id: int) -> Invoice | None:
         rows = await self._load(
@@ -60,6 +161,10 @@ class InvoiceRepository(BaseRepository[Invoice], IRepository[Invoice]):
             LEFT JOIN ingredients AS ing ON ing.id = ii.ingredient_id
             {filter_sql}
             """
+        ).columns(
+            invoice_date=Date(),
+            quantity=Numeric(14, 3),
+            unit_price=Numeric(14, 4),
         )
         rows = (await self._session.execute(sql, params)).mappings()
         invoices: dict[int, Invoice] = {}

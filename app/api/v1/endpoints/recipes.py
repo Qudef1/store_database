@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.db.repositories import get_recipe_service
-from app.schemas.recipes import RecipeCreate, RecipeListRead, RecipeRead, RecipeUpdate
+from app.schemas.recipes import RecipeCreate, RecipeRead, RecipeUpdate
 
 router = APIRouter()
 
@@ -25,12 +25,12 @@ async def get_recipe(
     return obj
 
 
-@router.get("/", response_model=list[RecipeListRead])
+@router.get("/", response_model=list[RecipeRead])
 async def list_recipes(
     offset: int = 0,
     limit: int = 100,
     service = Depends(get_recipe_service),
-) -> list[RecipeListRead]:
+) -> list[RecipeRead]:
     return await service.list(offset=offset, limit=limit)
 
 

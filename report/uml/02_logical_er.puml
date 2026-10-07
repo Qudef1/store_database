@@ -1,0 +1,102 @@
+@startuml
+title Логическая ER-диаграмма предметной области
+
+top to bottom direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 180
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor #EAF3F8
+  BorderColor #1E3A5F
+  FontColor #0F172A
+}
+hide circle
+
+entity "Группа товаров" as ProductGroup {
+  * Код
+  --
+  Наименование
+}
+
+entity "Товар" as Product {
+  * Идентификатор
+  --
+  Наименование
+}
+
+entity "Автор" as Author {
+  * Код
+  --
+  Фамилия
+  Имя
+  Страна
+  Год рождения
+}
+
+entity "Рецепт" as Recipe {
+  * Номер
+  --
+  Наименование
+  Описание
+}
+
+entity "Ингредиент" as Ingredient {
+  * Идентификатор
+  --
+  Наименование
+  Калорийность одного грамма
+}
+
+entity "Способ подготовки" as PreparationMethod {
+  * Код
+  --
+  Наименование
+}
+
+entity "Состав рецепта" as RecipeIngredient #FFF1DF {
+  * Идентификатор
+  --
+  Масса на 1 кг продукта
+}
+
+entity "Поставщик" as Supplier {
+  * Код
+  --
+  Наименование
+  Адрес
+  Телефон
+}
+
+entity "Накладная" as Invoice {
+  * Идентификатор
+  --
+  Номер
+  Дата
+}
+
+entity "Позиция накладной" as InvoiceItem #FFF1DF {
+  * Идентификатор
+  --
+  Количество
+  Цена единицы
+}
+
+ProductGroup ||--o{ Product : "содержит"
+Product ||--o{ Recipe : "имеет"
+Author ||--o{ Recipe : "создаёт"
+Recipe ||--|{ RecipeIngredient : "состоит из"
+Ingredient ||--o{ RecipeIngredient : "используется в"
+PreparationMethod ||--o{ RecipeIngredient : "задаёт обработку"
+Supplier ||--o{ Invoice : "поставляет по"
+Invoice ||--|{ InvoiceItem : "содержит"
+Ingredient ||--o{ InvoiceItem : "поставляется в"
+
+legend right
+  || -- обязательная одна запись
+  o{ -- ноль или несколько записей
+  |{ -- одна или несколько записей
+endlegend
+@enduml
